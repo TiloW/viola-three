@@ -1,0 +1,1 @@
+This project aims to visualize various strategies for the blocks relocation problem (BRP).
