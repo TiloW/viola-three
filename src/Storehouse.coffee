@@ -2,7 +2,8 @@ Stack = require './Stack.coffee'
 
 module.exports = class Storehouse
 
-  constructor: (initialItems) ->
+  constructor: (options) ->
+    @maxItems = options.maxItems
     @stacks = []
     @renderer = new THREE.WebGLRenderer()
     @renderer.setSize(window.innerWidth, window.innerHeight)
@@ -18,7 +19,7 @@ module.exports = class Storehouse
     @scene = new THREE.Scene()
     @clock = new THREE.Clock()
 
-    @initStacks(initialItems)
+    @initStacks(options.items)
 
     window.addEventListener('resize', (=> @resize()), false)
     @resize()
@@ -42,11 +43,14 @@ module.exports = class Storehouse
 
   addStack: (numberOfItems = 0) ->
     stackCounter = @stacks.length
-    position =
+    pos =
       x: Math.floor(stackCounter / @size)*120
       y: 0
       z: Math.floor(stackCounter % @size)*120
-    @stacks.push new Stack @scene, position
+    @stacks.push new Stack
+      scene: @scene
+      position: pos
+      maxItems: @maxItems
     i = 0
     while i++ < numberOfItems
       @addItem stackCounter
@@ -55,7 +59,7 @@ module.exports = class Storehouse
     @stacks[stackId].addItem()
 
   relocate: (originStackId, targetStackId) ->
-    # TODO
+    @stacks[originStackId].relocateTo @stacks[targetStackId]
 
   unload: (stackId) ->
     @stacks[stackId].unload()
