@@ -12,7 +12,7 @@ module.exports = class Storehouse
     @camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000)
     @camera.position.z = 400
 
-    @controls = new THREE.FirstPersonControls @camera
+    @controls = new THREE.OrbitControls @camera
     @controls.movementSpeed = 200;
     @controls.lookSpeed = .25
 
@@ -29,7 +29,7 @@ module.exports = class Storehouse
     @camera.aspect = window.innerWidth / window.innerHeight
     @camera.updateProjectionMatrix()
     @renderer.setSize(window.innerWidth, window.innerHeight)
-    @controls.handleResize();
+    #@controls.handleResize();
 
   render: ->
     requestAnimationFrame(=> @render())

@@ -49,7 +49,7 @@ module.exports = class Stack
 
   relocateTo: (otherStack) ->
     item = @_getTopItem()
-    canRelocate = not @isEmpty() and not otherStack.isFull()
+    canRelocate = not @isEmpty() and not otherStack.isFull() and otherStack isnt @
     if canRelocate
       MOVE_SIZE = Item.HEIGHT/10
       needsLiftingUp = true
