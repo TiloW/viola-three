@@ -11,7 +11,7 @@ To run the application on your machine:
 * run `grunt`
 
 You can then access a [local http server](http://127.0.0.1:8080) delivering the script to your browser. 
-Navigate by moving your mouse and WASD. The `Storehouse` Object is exported to document and can thus be accessed by your browsers javascript-console.
+The `Storehouse` Object is exported to document and can thus be accessed by your browsers javascript-console.
 
 There are basically three methods for accessing the top item of any (indexed) stack
 * `document.storehouse.addItem(5);`
