@@ -17,26 +17,28 @@ module.exports = class Stack
 
     @scene.add @mesh
 
-  addItem: (item = null) ->
+  addItem: (item, callback) ->
     itemCounter = @items.length
     stackIsFull = itemCounter >= @maxItems
     unless stackIsFull
       pos =
         x: @mesh.position.x
-        y: itemCounter*Item.HEIGHT + Stack.HEIGHT*2
+        y: @getTopPosY()
         z: @mesh.position.z
+
       item?.mesh.position = pos
-      @items.push item ? (new Item
+      item ?= new Item
         scene: @scene
         position: pos
-      )
+      @items.push item
 
+    callback?()
     not stackIsFull
 
-  unload: ->
+  unload: (callback) ->
     item = @_getTopItem()
     if item
-      setTimeout((=> @_removeItem(item)), 2000);
+      setTimeout((=> @_removeItem(item, callback)), 2000);
       @items = @items[0..-2]
 
       animate = ->
@@ -47,9 +49,9 @@ module.exports = class Stack
 
     item?
 
-  relocateTo: (otherStack) ->
+  relocateTo: (otherStack, callback) ->
     item = @_getTopItem()
-    canRelocate = not @isEmpty() and not otherStack.isFull() and otherStack isnt @
+    canRelocate = not @isEmpty() and otherStack? and not otherStack.isFull() and otherStack isnt @
     if canRelocate
       MOVE_SIZE = Item.HEIGHT/10
       needsLiftingUp = true
@@ -63,6 +65,7 @@ module.exports = class Stack
         else
           @items = @items[0..-2]
           otherStack.addItem item
+          callback?()
 
         needsLiftingUp &= item.mesh.position.y < (@maxItems+2) * Item.HEIGHT
         item.mesh.position.y += MOVE_SIZE if needsLiftingUp
@@ -73,11 +76,14 @@ module.exports = class Stack
           item.mesh.position.z += Item.HEIGHT/10 * (if otherStack.mesh.position.z > item.mesh.position.z then 1 else -1) if needsShiftingZ
 
           unless needsShiftingX or needsShiftingZ
-            needsLowering &= Math.abs(item.mesh.position.y - Item.HEIGHT - otherStack.getTopHeight()) > MOVE_SIZE
+            item.mesh.position.x = (item.mesh.position.x + otherStack.mesh.position.x)/2
+            item.mesh.position.z = (item.mesh.position.z + otherStack.mesh.position.z)/2
+            needsLowering &= item.mesh.position.y - otherStack.getTopPosY() > MOVE_SIZE
             item.mesh.position.y -= MOVE_SIZE
 
       animate()
 
+    callback?() unless canRelocate
     canRelocate
 
   isFull: ->
@@ -86,12 +92,12 @@ module.exports = class Stack
   isEmpty: ->
     @items.length is 0
 
-  getTopHeight: ->
-    top = @_getTopItem()
-    if top then top.mesh.position.y else Stack.HEIGHT*2
+  getTopPosY: ->
+    @mesh.position.y + Stack.HEIGHT/2 + (@items.length+.5)*Item.HEIGHT
 
   _getTopItem: ->
     @items[-1..][0]
 
-  _removeItem: (item) ->
+  _removeItem: (item, callback) ->
     @scene.remove item.mesh
+    callback?()

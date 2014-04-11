@@ -1,10 +1,10 @@
 module.exports = class Item
-  @HEIGHT: 20
+  @HEIGHT: 30
   @WIDTH: 100
 
   constructor: (options) ->
     @scene = options.scene
-    @geometry = new THREE.BoxGeometry(Item.WIDTH, Item.HEIGHT-2, Item.WIDTH)
+    @geometry = new THREE.BoxGeometry(Item.WIDTH, Item.HEIGHT, Item.WIDTH)
     @texture = THREE.ImageUtils.loadTexture('textures/crate.gif')
     @texture.anisotropy = 4
     @material = new THREE.MeshBasicMaterial(map: @texture)

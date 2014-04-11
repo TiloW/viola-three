@@ -56,10 +56,21 @@ module.exports = class Storehouse
       @addItem stackCounter
 
   addItem: (stackId) ->
-    @stacks[stackId].addItem()
+    if @stacks[stackId]?
+      @_lock() and @stacks[stackId].addItem null, => @_unlock()
 
   relocate: (originStackId, targetStackId) ->
-    @stacks[originStackId].relocateTo @stacks[targetStackId]
+    if @stacks[originStackId]?
+      @_lock() and @stacks[originStackId].relocateTo @stacks[targetStackId], => @_unlock()
 
   unload: (stackId) ->
-    @stacks[stackId].unload()
+    if @stacks[stackId]?
+      @_lock() and @stacks[stackId].unload => @_unlock()
+
+  _lock: ->
+    result = not @locked
+    @locked = true
+    result
+
+  _unlock: ->
+    @locked = false

@@ -1,9 +1,6 @@
-# just some sample code found on
-# http://threejs.org/examples/#webgl_geometry_cube
-
 Storehouse = require './Storehouse.coffee'
 
 window.onload = ->
   document.storehouse = new Storehouse
-    items: [1,10,4,5,7,2,0]
-    maxItems: 10
+    items: [6,7,4,5,2,1,4,0]
+    maxItems: 7
