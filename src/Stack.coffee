@@ -34,7 +34,7 @@ module.exports = class Stack
     not stackIsFull
 
   unload: ->
-    item = @_top()
+    item = @_getTopItem()
     if item
       setTimeout((=> @_removeItem(item)), 2000);
       @items = @items[0..-2]
