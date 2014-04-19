@@ -1,8 +1,10 @@
 Stack = require './Stack.coffee'
+Item = require './Item.coffee'
 
 module.exports = class Storehouse
 
   constructor: (options) ->
+    @promised = []
     @maxItems = options.maxItems
     @stacks = []
     @renderer = new THREE.WebGLRenderer()
@@ -10,14 +12,12 @@ module.exports = class Storehouse
     document.body.appendChild(@renderer.domElement)
 
     @camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000)
-    @camera.position.z = 400
 
     @controls = new THREE.OrbitControls @camera
     @controls.movementSpeed = 200;
     @controls.lookSpeed = .25
 
     @scene = new THREE.Scene()
-    @clock = new THREE.Clock()
 
     @initStacks(options.items)
 
@@ -34,14 +34,20 @@ module.exports = class Storehouse
   render: ->
     requestAnimationFrame(=> @render())
     @renderer.render(@scene, @camera)
-    @controls.update @clock.getDelta()
+    @controls.update()
 
-  initStacks: (initialItems) ->
-    @size = Math.ceil Math.sqrt initialItems.length
-    for numberOfItems in initialItems
-      @addStack numberOfItems
+  initStacks: (stacks) ->
+    @size = Math.ceil Math.sqrt stacks.length
+    
+    tmp = @size * Item.WIDTH
+    @camera.position.x = tmp
+    @camera.position.z = tmp
+    @camera.position.y = @maxItems * 2 * Item.HEIGHT
+    
+    for items in stacks
+      @addStack items
 
-  addStack: (numberOfItems = 0) ->
+  addStack: (items = []) ->
     stackCounter = @stacks.length
     pos =
       x: Math.floor(stackCounter / @size)*120
@@ -52,20 +58,50 @@ module.exports = class Storehouse
       position: pos
       maxItems: @maxItems
     i = 0
-    while i++ < numberOfItems
-      @addItem stackCounter
+    for itemName in items
+      @addItem stackCounter, itemName
 
-  addItem: (stackId) ->
+  addItem: (stackId, itemName) ->
     if @stacks[stackId]?
-      @_lock() and @stacks[stackId].addItem null, => @_unlock()
+      @_lock() and @stacks[stackId].addItem(
+        (new Item
+          scene: @scene
+          name: itemName
+        ),
+        => @_unlock()
+      )
 
-  relocate: (originStackId, targetStackId) ->
-    if @stacks[originStackId]?
-      @_lock() and @stacks[originStackId].relocateTo @stacks[targetStackId], => @_unlock()
+  relocate: (originStackId, targetStackId, callback = ->) ->
+    result = false
+    if @stacks[originStackId]? and @_lock() 
+      result = @stacks[originStackId].relocateTo @stacks[targetStackId], => 
+        @_unlock() 
+        callback()
+      @_unlock() unless result
+    result
 
-  unload: (stackId) ->
-    if @stacks[stackId]?
-      @_lock() and @stacks[stackId].unload => @_unlock()
+  unload: (stackId, callback = ->) ->
+    result = false
+    if @stacks[stackId]? and  @_lock() 
+      result = @stacks[stackId].unload => 
+        @_unlock()
+        callback()
+      @_unlock() unless result
+    result
+    
+  promiseTo: ->
+    promised = @promised
+    self = @
+    {
+      relocate: (originStackId, targetStackId) ->
+        promised.push -> self.relocate(originStackId, targetStackId)
+        self._unlock() unless self.locked
+        @
+      unload: (stackId) ->
+        promised.push -> self.unload(stackId)
+        self._unlock() unless self.locked
+        @
+    }
 
   _lock: ->
     result = not @locked
@@ -74,3 +110,5 @@ module.exports = class Storehouse
 
   _unlock: ->
     @locked = false
+    if @promised.length > 0
+      @promised.shift().call()

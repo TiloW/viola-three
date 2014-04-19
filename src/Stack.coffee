@@ -26,10 +26,7 @@ module.exports = class Stack
         y: @getTopPosY()
         z: @mesh.position.z
 
-      item?.mesh.position = pos
-      item ?= new Item
-        scene: @scene
-        position: pos
+      item.mesh.position = pos
       @items.push item
 
     callback?()
@@ -38,14 +35,18 @@ module.exports = class Stack
   unload: (callback) ->
     item = @_getTopItem()
     if item
-      setTimeout((=> @_removeItem(item, callback)), 2000);
       @items = @items[0..-2]
 
-      animate = ->
-        if item.mesh.position
+      clock = new THREE.Clock()
+      animate = =>
+        if item.mesh.position.y < @mesh.position.y + (@maxItems+1)*Item.HEIGHT
           requestAnimationFrame(animate)
-        item.mesh.position.y += Item.HEIGHT/10
+          item.mesh.position.y += Item.HEIGHT*2 * clock.getDelta()
+        else
+          setTimeout((=> @_removeItem(item, callback)), 1000)
+          
       animate()
+      clock.start()
 
     item?
 
@@ -53,13 +54,14 @@ module.exports = class Stack
     item = @_getTopItem()
     canRelocate = not @isEmpty() and otherStack? and not otherStack.isFull() and otherStack isnt @
     if canRelocate
-      MOVE_SIZE = Item.HEIGHT/10
       needsLiftingUp = true
       needsShiftingX = true
       needsShiftingZ = true
       needsLowering = true
 
+      clock = new THREE.Clock()
       animate = =>
+        moveSize = Item.HEIGHT*2*clock.getDelta()
         if needsLowering
           requestAnimationFrame(animate)
         else
@@ -68,20 +70,21 @@ module.exports = class Stack
           callback?()
 
         needsLiftingUp &= item.mesh.position.y < (@maxItems+2) * Item.HEIGHT
-        item.mesh.position.y += MOVE_SIZE if needsLiftingUp
+        item.mesh.position.y += moveSize if needsLiftingUp
         unless needsLiftingUp
-          needsShiftingX &= Math.abs(item.mesh.position.x - otherStack.mesh.position.x) > MOVE_SIZE
-          needsShiftingZ &= Math.abs(item.mesh.position.z - otherStack.mesh.position.z) > MOVE_SIZE
-          item.mesh.position.x += Item.HEIGHT/10 * (if otherStack.mesh.position.x > item.mesh.position.x then 1 else -1) if needsShiftingX
-          item.mesh.position.z += Item.HEIGHT/10 * (if otherStack.mesh.position.z > item.mesh.position.z then 1 else -1) if needsShiftingZ
+          needsShiftingX &= Math.abs(item.mesh.position.x - otherStack.mesh.position.x) > moveSize
+          needsShiftingZ &= Math.abs(item.mesh.position.z - otherStack.mesh.position.z) > moveSize
+          item.mesh.position.x += moveSize * (if otherStack.mesh.position.x > item.mesh.position.x then 1 else -1) if needsShiftingX
+          item.mesh.position.z += moveSize * (if otherStack.mesh.position.z > item.mesh.position.z then 1 else -1) if needsShiftingZ
 
           unless needsShiftingX or needsShiftingZ
             item.mesh.position.x = (item.mesh.position.x + otherStack.mesh.position.x)/2
             item.mesh.position.z = (item.mesh.position.z + otherStack.mesh.position.z)/2
-            needsLowering &= item.mesh.position.y - otherStack.getTopPosY() > MOVE_SIZE
-            item.mesh.position.y -= MOVE_SIZE
+            needsLowering &= item.mesh.position.y - otherStack.getTopPosY() > moveSize
+            item.mesh.position.y -= moveSize
 
       animate()
+      clock.start()
 
     callback?() unless canRelocate
     canRelocate
