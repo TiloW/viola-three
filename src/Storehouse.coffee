@@ -7,11 +7,10 @@ module.exports = class Storehouse
     @promised = []
     @maxItems = options.maxItems
     @stacks = []
-    @renderer = new THREE.WebGLRenderer()
-    @renderer.setSize(window.innerWidth, window.innerHeight)
-    document.body.appendChild(@renderer.domElement)
+    @canvas = options.canvas
+    @renderer = new THREE.WebGLRenderer(canvas: @canvas)
 
-    @camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000)
+    @camera = new THREE.PerspectiveCamera(70, 1, 1, 1000)
 
     @controls = new THREE.OrbitControls @camera
     @controls.movementSpeed = 200;
@@ -21,14 +20,13 @@ module.exports = class Storehouse
 
     @initStacks(options.items)
 
-    window.addEventListener('resize', (=> @resize()), false)
     @resize()
     @render()
 
   resize: ->
-    @camera.aspect = window.innerWidth / window.innerHeight
+    @camera.aspect = @canvas.width / @canvas.height
     @camera.updateProjectionMatrix()
-    @renderer.setSize(window.innerWidth, window.innerHeight)
+    @renderer.setSize(@canvas.width, @canvas.height)
     #@controls.handleResize();
 
   render: ->
