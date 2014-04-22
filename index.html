@@ -1,14 +1,91 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8" />
-	<title>ViOLa UI Prototype</title>
-	<script src="lib/three.js"></script>
-	<script src="build/main.js"></script>
-	<script src="lib/controls.js"></script>
-	<link rel="stylesheet" href="main.css" />
+  <meta charset="utf-8" />
+  <title>ViOLa UI Prototype</title>
+  <script src="lib/three.js"></script>
+  <script src="build/main.js"></script>
+  <script src="lib/controls.js"></script>
+  <link rel="stylesheet" href="main.css" />
 </head>
 <body>
+  <canvas id="canvas-la"></canvas>
+  <canvas id="canvas-la-2"></canvas>
+  <script>
+      var c = document.getElementById('canvas-la');
+      var c2 = document.getElementById('canvas-la-2');
+      var s = null;
+      var s2 = null;
 
+      function retrieveItems() {
+        s.promiseTo()
+        .relocate(0,2)
+        .unload(0)
+        .relocate(1,2)
+        .relocate(1,2)
+        .relocate(1,2)
+        .unload(1)
+        .unload(0)
+        .relocate(2,1)
+        .relocate(2,0)
+        .relocate(2,0)
+        .unload(2)
+        .unload(1)
+        .relocate(0,2)
+        .relocate(0,1)
+        .unload(0)
+        .unload(1)
+        .unload(2);
+
+        s2.promiseTo()
+        .relocate(1,2)
+        .relocate(1,2)
+        .relocate(1,2)
+        .relocate(0,2)
+        .unload(0)
+        .unload(1)
+        .unload(0)
+        .unload(2)
+        .unload(2)
+        .unload(0)
+        .unload(2)
+        .unload(2);
+      }
+
+      window.onresize = function() {
+        c.width = c2.width = window.innerWidth/2.02 - 5;
+        c.height = c2.height = window.innerHeight;
+        s.resize();
+        s2.resize();
+      };
+
+      var options = {
+        maxItems: 4,
+        canvas: c,
+        items: [
+            [6,3,1,4],
+            [2,5,7,8],
+            []
+          ]
+      };
+
+      window.onload = function() {
+        document.storehouse = s = new Storehouse(options);
+        options.canvas = c2;
+        s2 = new Storehouse(options);
+
+        window.onresize();
+
+        setTimeout(retrieveItems, 3000);
+      };
+  </script>
+  <style>
+    canavs {
+      float: left;
+    }
+    canvas#canvas-la-2 {
+      float: right;
+    }
+  </style>
 </body>
 </html>
